@@ -29,7 +29,7 @@ Record non-obvious constraints via `--caveat "..."` at registration time (for ex
 
 ## On failure
 
-The tool prints the method attempted and the registry entry to stderr and exits non-zero. Read the error. On network timeout or 5xx, retry at most once. On auth, 401, 404, or private access, report back to the user with the URL so they can intervene manually.
+The tool prints the method attempted and the registry entry to stderr and exits non-zero. Read the error. On network timeout or 5xx, retry at most once. Otherwise report back to the user with the URL for manual intervention.
 
 ## Slug conventions
 
