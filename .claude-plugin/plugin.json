@@ -1,0 +1,8 @@
+{
+  "name": "datasets-tools",
+  "version": "0.1.0",
+  "description": "Fetch research datasets (HuggingFace / GitHub / direct URL) into /home/datasets/<slug>/ with a MANIFEST. Idempotent, shared across users.",
+  "author": { "name": "xingyu" },
+  "license": "MIT",
+  "skills": "./skills/"
+}

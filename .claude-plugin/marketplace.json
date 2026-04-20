@@ -1,0 +1,11 @@
+{
+  "name": "datasets-tools",
+  "owner": { "name": "xingyu" },
+  "plugins": [
+    {
+      "name": "datasets-tools",
+      "source": "./",
+      "description": "Fetch research datasets (HuggingFace / GitHub / direct URL) into a shared local cache."
+    }
+  ]
+}
