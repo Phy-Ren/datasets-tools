@@ -1,10 +1,11 @@
 ---
 name: datasets
 description: >
-  Fetch research datasets by slug into the /home/datasets/ shared cache. Use
-  when a task references a named dataset and the files are needed on disk.
-  Handles HuggingFace datasets, public GitHub repos, and direct URL
-  downloads. Fetches are idempotent and shared across users on this machine.
+  Fetch non-HuggingFace research datasets by slug into the /home/datasets/
+  shared cache. Use when a task references a named dataset hosted on github
+  or a direct download URL and the files are needed on disk. Fetches are
+  idempotent and shared across users on this machine. HuggingFace-hosted
+  datasets are out of scope; use the huggingface plugin for those.
 ---
 
 # Fetch datasets
@@ -20,16 +21,15 @@ uv run "${CLAUDE_PLUGIN_ROOT}/dataset_tool.py" <subcommand>
 `dataset list` shows registered slugs and whether each is cached. Run `dataset fetch <slug>` for a registered slug; files land at `/home/datasets/<slug>/` with a `MANIFEST.md`. Register an unknown slug first:
 
 ```bash
-dataset add <slug> --hf user/repo          # HuggingFace
 dataset add <slug> --gh owner/repo         # GitHub
 dataset add <slug> --url https://...       # direct URL, repeatable
 ```
 
-Record non-obvious constraints (access gating, incomplete coverage, variant selection) with `--caveat "..."` at registration time.
+Record non-obvious constraints via `--caveat "..."` at registration time (for example, access gating that the tool cannot detect upfront).
 
 ## On failure
 
-The tool prints the method attempted and the registry entry to stderr and exits non-zero. Read the error. On network timeout or 5xx, one retry is reasonable. On auth / 401 / 404 / private access, report back to the user with the URL so they can intervene manually.
+The tool prints the method attempted and the registry entry to stderr and exits non-zero. Read the error. On network timeout or 5xx, retry at most once. On auth, 401, 404, or private access, report back to the user with the URL so they can intervene manually.
 
 ## Slug conventions
 

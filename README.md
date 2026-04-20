@@ -27,16 +27,17 @@ Then register the plugin in `~/.claude/settings.json`:
 
 ```bash
 uv run ~/datasets-tools/dataset_tool.py list
-uv run ~/datasets-tools/dataset_tool.py add nmrgym --hf xiong-group/NMRGym --caveat "scaffold-split release"
-uv run ~/datasets-tools/dataset_tool.py fetch nmrgym
-uv run ~/datasets-tools/dataset_tool.py manifest nmrgym
+uv run ~/datasets-tools/dataset_tool.py add geom-drugs --url https://example.com/archive.zip --caveat "Axelrod & Gomez-Bombarelli 2022"
+uv run ~/datasets-tools/dataset_tool.py fetch geom-drugs
+uv run ~/datasets-tools/dataset_tool.py manifest geom-drugs
 ```
 
 Subcommands: `fetch | list | add | manifest`. Registry lives at `/home/datasets/registry.yaml`. Each fetched dataset gets `/home/datasets/<slug>/MANIFEST.md`.
 
+HuggingFace datasets are out of scope here; use the `huggingface` plugin for those.
+
 ## Sources
 
-- HuggingFace datasets: `--hf user/repo`, optional `--hf-allow '*.csv'`
 - GitHub: `--gh owner/name`, optional `--gh-ref main`
 - Direct URL: `--url ...` (repeatable)
 

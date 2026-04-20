@@ -4,10 +4,12 @@
 # dependencies = [
 #   "pyyaml>=6.0",
 #   "requests>=2.31",
-#   "huggingface_hub>=0.24",
 # ]
 # ///
-"""dataset — fetch research datasets into /home/datasets/<slug>/.
+"""dataset — fetch non-HuggingFace research datasets into /home/datasets/<slug>/.
+
+Sources: github repos, direct URL downloads. For HuggingFace use the
+huggingface plugin instead.
 
 subcommands: fetch | list | add | manifest
 """
@@ -54,18 +56,6 @@ def acquire_lock(name: str):
     return fp
 
 
-def fetch_huggingface(entry: dict, target: Path) -> dict:
-    from huggingface_hub import snapshot_download
-
-    snapshot_download(
-        repo_id=entry["hf_repo"],
-        repo_type="dataset",
-        local_dir=str(target),
-        allow_patterns=entry.get("hf_allow"),
-    )
-    return {"method": "huggingface_hub.snapshot_download", "repo_id": entry["hf_repo"]}
-
-
 def fetch_github(entry: dict, target: Path) -> dict:
     url = f"https://github.com/{entry['gh_repo']}.git"
     ref = entry.get("gh_ref")
@@ -105,7 +95,6 @@ def http_download(url: str, dest: Path, tries: int = 3) -> None:
 
 
 FETCHERS = {
-    "huggingface": fetch_huggingface,
     "github": fetch_github,
     "http": fetch_http,
 }
@@ -190,11 +179,10 @@ def cmd_list(args) -> int:
 
 
 def cmd_add(args) -> int:
-    provided = [name for name, val in
-                (("--hf", args.hf), ("--gh", args.gh), ("--url", args.url)) if val]
+    provided = [name for name, val in (("--gh", args.gh), ("--url", args.url)) if val]
     if len(provided) != 1:
         got = ", ".join(provided) or "none"
-        print(f"error: specify exactly one of --hf / --gh / --url (got: {got})", file=sys.stderr)
+        print(f"error: specify exactly one of --gh / --url (got: {got})", file=sys.stderr)
         return 2
 
     lock = acquire_lock("registry")
@@ -204,12 +192,7 @@ def cmd_add(args) -> int:
             print(f"error: '{args.slug}' exists (--force to overwrite)", file=sys.stderr)
             return 2
         entry: dict = {}
-        if args.hf:
-            entry["source"] = "huggingface"
-            entry["hf_repo"] = args.hf
-            if args.hf_allow:
-                entry["hf_allow"] = args.hf_allow
-        elif args.gh:
+        if args.gh:
             entry["source"] = "github"
             entry["gh_repo"] = args.gh
             if args.gh_ref:
@@ -253,9 +236,6 @@ def main():
 
     a = sub.add_parser("add", help="register a new dataset")
     a.add_argument("slug")
-    a.add_argument("--hf", metavar="USER/REPO", help="HuggingFace dataset repo")
-    a.add_argument("--hf-allow", action="append", metavar="GLOB",
-                   help="allow_patterns glob (repeatable)")
     a.add_argument("--gh", metavar="OWNER/NAME", help="GitHub repo")
     a.add_argument("--gh-ref", metavar="REF", help="git branch / tag / commit")
     a.add_argument("--url", action="append", metavar="URL", help="direct URL (repeatable)")
