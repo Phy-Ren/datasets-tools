@@ -47,9 +47,9 @@ def slug_dir(slug: str) -> Path:
     return ROOT / slug
 
 
-def acquire_lock(slug: str):
+def acquire_lock(name: str):
     ROOT.mkdir(parents=True, exist_ok=True)
-    fp = open(ROOT / f".{slug}.lock", "w")
+    fp = open(ROOT / f".{name}.lock", "w")
     fcntl.flock(fp, fcntl.LOCK_EX)
     return fp
 
@@ -68,11 +68,14 @@ def fetch_huggingface(entry: dict, target: Path) -> dict:
 
 def fetch_github(entry: dict, target: Path) -> dict:
     url = f"https://github.com/{entry['gh_repo']}.git"
-    subprocess.run(["git", "clone", "--depth", "1", url, str(target)], check=True)
     ref = entry.get("gh_ref")
+    cmd = ["git", "clone", url, str(target)]
+    if not ref:
+        cmd[2:2] = ["--depth", "1"]
+    subprocess.run(cmd, check=True)
     if ref:
         subprocess.run(["git", "-C", str(target), "checkout", ref], check=True)
-    return {"method": "git clone --depth 1", "repo": entry["gh_repo"], "ref": ref}
+    return {"method": " ".join(cmd[:-2]), "repo": entry["gh_repo"], "ref": ref}
 
 
 def fetch_http(entry: dict, target: Path) -> dict:
@@ -187,36 +190,44 @@ def cmd_list(args) -> int:
 
 
 def cmd_add(args) -> int:
-    reg = load_registry()
-    if args.slug in reg and not args.force:
-        print(f"error: '{args.slug}' exists (--force to overwrite)", file=sys.stderr)
+    provided = [name for name, val in
+                (("--hf", args.hf), ("--gh", args.gh), ("--url", args.url)) if val]
+    if len(provided) != 1:
+        got = ", ".join(provided) or "none"
+        print(f"error: specify exactly one of --hf / --gh / --url (got: {got})", file=sys.stderr)
         return 2
-    entry: dict = {}
-    if args.hf:
-        entry["source"] = "huggingface"
-        entry["hf_repo"] = args.hf
-        if args.hf_allow:
-            entry["hf_allow"] = args.hf_allow
-    elif args.gh:
-        entry["source"] = "github"
-        entry["gh_repo"] = args.gh
-        if args.gh_ref:
-            entry["gh_ref"] = args.gh_ref
-    elif args.url:
-        entry["source"] = "http"
-        if len(args.url) == 1:
-            entry["url"] = args.url[0]
-        else:
-            entry["urls"] = args.url
-    else:
-        print("error: specify one of --hf / --gh / --url", file=sys.stderr)
-        return 2
-    if args.caveat:
-        entry["caveat"] = args.caveat
-    reg[args.slug] = entry
-    save_registry(reg)
-    print(f"added: {args.slug}")
-    return 0
+
+    lock = acquire_lock("registry")
+    try:
+        reg = load_registry()
+        if args.slug in reg and not args.force:
+            print(f"error: '{args.slug}' exists (--force to overwrite)", file=sys.stderr)
+            return 2
+        entry: dict = {}
+        if args.hf:
+            entry["source"] = "huggingface"
+            entry["hf_repo"] = args.hf
+            if args.hf_allow:
+                entry["hf_allow"] = args.hf_allow
+        elif args.gh:
+            entry["source"] = "github"
+            entry["gh_repo"] = args.gh
+            if args.gh_ref:
+                entry["gh_ref"] = args.gh_ref
+        elif args.url:
+            entry["source"] = "http"
+            if len(args.url) == 1:
+                entry["url"] = args.url[0]
+            else:
+                entry["urls"] = args.url
+        if args.caveat:
+            entry["caveat"] = args.caveat
+        reg[args.slug] = entry
+        save_registry(reg)
+        print(f"added: {args.slug}")
+        return 0
+    finally:
+        lock.close()
 
 
 def cmd_manifest(args) -> int:
