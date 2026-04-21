@@ -4,9 +4,10 @@ description: >
   Fetch research datasets by slug into /home/datasets/<slug>/ as ready-to-use
   files. A slug combines one or more sources (GitHub repo + HuggingFace dataset
   + direct URLs); archives auto-extract; an `expects` contract rejects silent
-  partial fetches. Use when a task references a named dataset and the data must
-  be on disk. For HuggingFace-only datasets, the huggingface plugin is the
-  simpler route.
+  partial fetches. Use when a task references a named dataset, or before
+  designing any data-dependent pilot / experiment (run `dataset list` first to
+  see what's already in the shared cache). For HuggingFace-only datasets, the
+  huggingface plugin is the simpler route.
 ---
 
 # Fetch datasets
@@ -23,6 +24,19 @@ uv run "${CLAUDE_PLUGIN_ROOT}/dataset_tool.py" <subcommand>
 - `fetch <slug> [--force]` — pull every configured source, extract archives, verify `expects`, write MANIFEST
 - `manifest <slug>` — print MANIFEST.md or DOWNLOAD_ME.md for a slug
 - `add <slug> [--gh O/N] [--hf O/N] [--url URL]... [--expect-...]` — register a new slug
+
+## Before designing a data-dependent pilot or experiment — `list` first
+
+<lookup>
+Run `dataset list` before proposing or coding any experiment that reads real
+data. /home/datasets/ is a shared cache across users and projects: a relevant
+slug showing `✓` is your data source — `open()` its files directly. A slug
+showing `⋯` is cached-but-pending: read its DOWNLOAD_ME.md via `dataset
+manifest <slug>` and follow the recovery path in "Recovering from exit 2"
+before falling back to collection. Only when `list` has no relevant slug
+should you `dataset add` a new one or declare "needs collection / needs
+annotation" in the writeup.
+</lookup>
 
 ## Status (shown by `list`)
 
