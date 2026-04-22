@@ -6,11 +6,22 @@ description: >
   + direct URLs); archives auto-extract; an `expects` contract rejects silent
   partial fetches. Use when a task references a named dataset, or before
   designing any data-dependent pilot / experiment (run `dataset list` first to
-  see what's already in the shared cache). For HuggingFace-only datasets, the
-  huggingface plugin is the simpler route.
+  see what's already in the shared cache). 本机 pilot cache only — 远端学校
+  服务器走 servers_manual 另一套. For HuggingFace-only datasets, the huggingface
+  plugin is the simpler route.
 ---
 
 # Fetch datasets
+
+## Scope: 本机 pilot cache, 不适用远端部署
+
+本 skill 负责本机 `/home/datasets/<slug>/` 下载与缓存, 供 idea / proposal 阶段的 pilot 代码用. 远端学校服务器 (UMD / Purdue) 数据路径另一套, 不复用本 skill:
+
+- HuggingFace: 5 台学校服务器均预配共享 HF cache, `datasets.load_dataset(...)` 直接命中, 不手动下载.
+- 非 HF: 每 project / 每 server 路径不同 (`/export/sun1245/<proj>/data/` 或 `/scr1/scratch/sun1245/<proj>/data/`), 由 coder 在 per-project 部署脚本里处理.
+- 远端 `~` 禁下大数据: UMD 三台 home 是 AFS 只读 + quota; Purdue 两台 home 是共享 NFS, 大文件炸全员 quota 并挨警告. 数据只写 `/export/sun1245` (UMD) 或 `/scr1/scratch/sun1245` (Purdue).
+
+详细远端路径 / shell / quota 见 `servers_manual.md`.
 
 Invoke as:
 
